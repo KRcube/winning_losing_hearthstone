@@ -1,0 +1,1 @@
+{"index":"D 03:14:05.5857160 GameState.DebugPrintPower() - CREATE_GAME","oneself":{"isPlayer":true,"Name":"Making97#1152","JobName":"마법사","Order":true,"Outcome":false},"target":{"isPlayer":false,"Name":"여관주인","JobName":"사냥꾼","Order":false,"Outcome":true}}

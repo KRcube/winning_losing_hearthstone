@@ -5,8 +5,12 @@ include_once('LogParser.php');
 // power.log에 기록되어 있는 게임 한 판 정보들을 담습니다.
 class Game
 {
+    Const SAVE_PATH = './resource/OutcomeData/outcome';
+
     private $strStartLog;
     private $arrPlayer = array();
+
+    private static $arrGameIndex = array();
 
     public function __construct($strStartLog, $arrGameLog)
     {
@@ -23,6 +27,34 @@ class Game
             "target" => $this->arrPlayer[1]->returnArrData()
         );
     }
+
+    // JSON형식으로 저장합니다.
+    public function saveJsonFormatFile()
+    {
+        $strFileName = $this->getSaveFileName();
+        $oOutcomeFile = fopen($strFileName, "w");
+
+        $strJSONData = json_encode($this->returnArrData(), JSON_UNESCAPED_UNICODE);
+        fwrite($oOutcomeFile, $strJSONData);
+        fclose($oOutcomeFile);
+    }
+
+    // 파일의 이름을 가져옵니다.
+    private function getSaveFileName()
+    {
+        $iGameCount = 1;
+        $strPath = "";
+
+        while(true) 
+        {
+            $strPath = Game::SAVE_PATH.$iGameCount.".txt";
+            if(!file_exists($strPath)) break;
+
+            $iGameCount += 1;
+        }
+
+        return $strPath;
+    }   
 
     // 플레이어의 정보를 설정합니다.
     private function setArrPlayer($arrGameLog)
@@ -47,30 +79,77 @@ class Game
         $this->arrPlayer = $arrPlayer;
     }
 
+    public static function returnAllGame()
+    {
+        $arrSavedAllGameData = array_reverse(self::loadSavedAllGameData());
+        $arrNewAllGameData = self::loadNewAllGameData();
+        $iNewGameCount = count($arrNewAllGameData);
+
+        if($iNewGameCount != 0) 
+        {
+            for($i=0; $i < count($iNewGameCount); $i++)  {
+                array_unshift($arrSavedAllGameData, $arrNewAllGameData[$i]);
+            }
+        }
+
+        return $arrSavedAllGameData;
+    }
+
     // 전체 로그에서 게임을 분리해 그 갯수만큼 게임 객체를 생성 후 반환합니다.
-    public static function getOGamePart()
+    private static function loadNewAllGameData()
     {
         $arrLogContext = LogParser::getArrLogContext();
         $arrGameStartLog = LogParser::getArrPartGameLog($arrLogContext);
-
-        //print_r($arrGameStartLog);
 
         $arrOrder = array_keys($arrGameStartLog);
         array_push($arrOrder, count($arrLogContext));
 
         $iGameCount = count($arrGameStartLog);
-        $arrGameObject = array();
+        $arrNewGameData = array();
 
         for($i=0; $i < $iGameCount; $i++)
         {
             $iStartOrder = $arrOrder[$i];
             $iEndOrder = $arrOrder[$i+1];
-        
-            $arrGamePartLog = self::getArrDivisionGameLog($iStartOrder, $iEndOrder, $arrLogContext);
-            $arrGameObject[] = new Game($arrGameStartLog[$iStartOrder], $arrGamePartLog);
+
+            $strGameStartLog = $arrGameStartLog[$iStartOrder];
+
+            if(!in_array($strGameStartLog, self::$arrGameIndex)) 
+            {
+                $arrGamePartLog = self::getArrDivisionGameLog($iStartOrder, $iEndOrder, $arrLogContext);
+                $oGameObject = new Game($strGameStartLog, $arrGamePartLog);
+                $oGameObject->saveJsonFormatFile();
+
+                $arrNewGameData[] = $oGameObject->returnArrData();
+            }
         }
 
-        return $arrGameObject;
+        return $arrNewGameData;
+    }
+
+    // 저장되어 있는 모든 게임들을 불러옵니다.
+    private static function loadSavedAllGameData()
+    {
+        $iGameCount = 1;
+        $strPath = "";
+        $arrSavedGame = array();
+
+        while(true) 
+        {
+            $strPath = Game::SAVE_PATH.$iGameCount.".txt";
+            if(!file_exists($strPath)) break;
+
+            $foutcomeFile = fopen($strPath, "r");
+            $strContext = fread($foutcomeFile, filesize($strPath));
+            $stdOutcome = json_decode($strContext);
+
+            self::$arrGameIndex[] = $stdOutcome->index;
+            $arrSavedGame[] = $stdOutcome;
+
+            $iGameCount += 1;
+        }
+
+        return $arrSavedGame;
     }
 
     // 각 게임의 시작과 끝을 이용해 로그를 분리 후 반환합니다.

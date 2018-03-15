@@ -1,0 +1,1 @@
+{"index":"D 03:24:04.2349750 GameState.DebugPrintPower() - CREATE_GAME","oneself":{"isPlayer":true,"Name":"Making97#1152","JobName":"성기사","Order":false,"Outcome":false},"target":{"isPlayer":false,"Name":"호오세#3126","JobName":"드루이드","Order":true,"Outcome":true}}

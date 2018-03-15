@@ -8,6 +8,13 @@ class LogParser
     {
         return explode("\n", self::getContextByFile());
     }
+
+    // 파일에서 로그를 전부 반환옵니다.
+    public static function getContextByFile()
+    {
+        $powerlogFile = fopen(PATH, "r");
+        return fread($powerlogFile, filesize(PATH));
+    }
     
     // 게임의 시작점들을 찾은 후 배열 형태로 반환합니다. (순서 포함)
     public static function getArrPartGameLog($arrContext)
@@ -104,11 +111,4 @@ class LogParser
 
         return $bresult;
     } 
-
-    // 파일에서 로그를 전부 반환옵니다.
-    private static function getContextByFile()
-    {
-        $powerlogFile = fopen(PATH, "r");
-        return fread($powerlogFile, filesize(PATH));
-    }
 }
